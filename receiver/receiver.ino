@@ -5,7 +5,7 @@
 */
 
 #include <WiFi.h>
-//#include <WebServer.h>
+#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
 #include <SD.h>
@@ -32,10 +32,11 @@ SPIClass loraSPI(VSPI); // we'll use the LoRa module on the VSPI (SPI3) module
 float time_to_action = millis();
 int modo_lora = 1;
 
-const char* ssid = "Lora_wifi";  // Enter SSID here
-const char* password = "12345678";  //Enter Password here
+const char* ssid = "Link Start";  // Enter SSID here
+const char* password = "1234#563";  //Enter Password here
 
 AsyncWebServer server(80);
+//WebServer server(80);
 
 float ax = 0;
 float ay = 0;
@@ -73,7 +74,8 @@ String als = "0";
 
 void setup() 
   {
-   
+    // Begins UART
+  Serial.begin(115200);
     ////////////////////////
   IPAddress local_ip(192,168,1,1);
   IPAddress gateway(192,168,1,1);
@@ -81,6 +83,16 @@ void setup()
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(local_ip, gateway, subnet);
   WiFi.softAP(ssid, password);
+//WiFi.begin(ssid, password);
+//check wi-fi is connected to wi-fi network
+//while (WiFi.status() != WL_CONNECTED) {
+//delay(1000);
+//Serial.print(".");
+//}
+//Serial.println("");
+//Serial.println("WiFi connected..!");
+Serial.print("Got IP: ");
+Serial.println(WiFi.localIP());
 
   if(!SPIFFS.begin()){
     Serial.println("An Error has occurred while mounting SPIFFS");
@@ -91,56 +103,57 @@ void setup()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
-//  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
-//    request->send_P(200, "text/plain", readBME280Temperature().c_str());
+//  server.on("/temperaturex", HTTP_GET, [](AsyncWebServerRequest *request){
+//    request->send_P(200, "text/plain", "1");
 //  });
-//  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
-//    request->send_P(200, "text/plain", readBME280Humidity().c_str());
+//  server.on("/humidityx", HTTP_GET, [](AsyncWebServerRequest *request){
+//    request->send_P(200, "text/plain", ays.c_str());
 //  });
-//  server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest *request){
-//    request->send_P(200, "text/plain", readBME280Pressure().c_str());
+//  server.on("/pressurex", HTTP_GET, [](AsyncWebServerRequest *request){
+//    request->send_P(200, "text/plain", axs.c_str());
 //  });
-  axs = String(ax);
+//  
   server.on("/aceleracao-x", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", axs.c_str());
+    request->send_P(200, "text/plain", axs.c_str()
+    );
   });
-  ays = String(ay);
+  
   server.on("/aceleracao-y", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", ays.c_str());
+    request->send_P(200, "text/plain", ays.c_str()
+    );
   });
-  azs = String(az);
+  
   server.on("/aceleracao-z", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", azs.c_str());
-  });
-  mxs = String(mx);
+  });  
   server.on("/magnetometro-x", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", mxs.c_str());
   });
-  mys = String(my);
+  
   server.on("/magnetometro-y", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", mys.c_str());
   });
-  mzs = String(mz);
+  
   server.on("/magnetometro-z", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", mzs.c_str());
   });
-  gxs = String(gx);
+  
   server.on("/giroscopio-x", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", gxs.c_str());
   });
-  gys = String(gy);
+  
   server.on("/giroscopio-y", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", gys.c_str());
   });
-  gzs = String(gz);
+  
   server.on("/giroscopio-z", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", gzs.c_str());
   });
-  baros = String(bar);
+  
   server.on("/barometro", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", baros.c_str());
   });
-  tems = String(tem);
+  
   server.on("/temperatura", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", tems.c_str());
   });
@@ -151,8 +164,7 @@ void setup()
   pinMode(LED,OUTPUT); // Green Led
   pinMode(VBAT,INPUT); // Input for Battery Voltage
 
-  // Begins UART
-  Serial.begin(115200);
+ 
   while (!Serial);
   delay(500);
   Serial.println();
@@ -268,17 +280,17 @@ void loop()
   // variables used for checking the battery and give an average value
   static uint16_t chkbat=0;
   static float tempbatt=0;
-   Serial.println(millis()- time_to_action);
+//   Serial.println(millis()- time_to_action);
   if(modo_lora==1||(millis()- time_to_action>350))
   {
-    Serial.println("Solicitando dados!");
+    //Serial.println("Solicitando dados!");
     LoRa.beginPacket();
     LoRa.print("*-*");
     LoRa.endPacket();
     time_to_action = millis();    
     modo_lora = 2;
   }else if (modo_lora==2){
-    Serial.println("Esperando dados!");
+    //Serial.println("Esperando dados!");
     display.clear();
   
   display.drawString(0,0,"LoRa RECEIVER Demo");
@@ -349,6 +361,20 @@ void getLoRaPacket(int packetSize)
     gz = obj[String("gz")];
     bar = obj[String("bar")];
     tem = obj[String("tem")];
+
+    axs = String(ax);
+    ays = String(ay);
+    azs = String(az);
+    mxs = String(mx);
+    mys = String(my);
+    mzs = String(mz);
+    gxs = String(gx);
+    gys = String(gy);
+    gzs = String(gz);
+    baros = String(bar);
+    tems = String(tem);
+    Serial.println(axs.c_str());
+    Serial.println(axs+","+ays+","+azs+","+mxs+","+mys+","+mzs+","+gxs+","+gys+","+gzs+","+baros+","+tems+";");
     Serial.println("Salvou dados!");
      modo_lora = 1;
     if (sdpresent)
